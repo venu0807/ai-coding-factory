@@ -4,6 +4,7 @@ import Index from "./pages/Index";
 import Project from "./pages/Project";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/project/:id" element={<Project />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/confirm-email" element={<ConfirmEmail />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
