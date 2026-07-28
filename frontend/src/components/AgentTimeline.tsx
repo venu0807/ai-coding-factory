@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { supabase, authedFetch } from "../lib/supabase";
+import { getSupabase, authedFetch } from "../lib/supabase";
 
 interface Task {
   id: string; agent_type: string; status: string;
@@ -18,11 +18,15 @@ export default function AgentTimeline({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     load();
-    const sub = supabase
-      .channel("agent_tasks")
-      .on("postgres_changes", { event: "*", schema: "public", table: "agent_tasks" }, load)
-      .subscribe();
-    return () => { sub.unsubscribe(); };
+    let unsub: (() => void) | undefined;
+    getSupabase().then((s) => {
+      const sub = s
+        .channel("agent_tasks")
+        .on("postgres_changes", { event: "*", schema: "public", table: "agent_tasks" }, load)
+        .subscribe();
+      unsub = () => sub.unsubscribe();
+    });
+    return () => unsub?.();
   }, [projectId]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { getSupabase } from '../lib/supabase';
 
 export default function ConfirmEmail() {
   const [searchParams] = useSearchParams();
@@ -10,9 +10,11 @@ export default function ConfirmEmail() {
     const token = searchParams.get('token');
     const type = searchParams.get('type');
     if (token && type === 'signup') {
-      supabase.auth.verifyOtp({ token_hash: token, type: 'signup' })
-        .then(({ error }) => setStatus(error ? 'error' : 'success'))
-        .catch(() => setStatus('error'));
+      getSupabase().then((s) =>
+        s.auth.verifyOtp({ token_hash: token, type: 'signup' })
+          .then(({ error }) => setStatus(error ? 'error' : 'success'))
+          .catch(() => setStatus('error'))
+      );
     } else {
       setStatus('success');
     }

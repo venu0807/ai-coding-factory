@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase, authedFetch } from "../lib/supabase";
+import { getSupabase, authedFetch } from "../lib/supabase";
 import AgentTimeline from "../components/AgentTimeline";
 import FileTree from "../components/FileTree";
 
@@ -11,11 +11,15 @@ export default function Project() {
   useEffect(() => {
     if (!id) return;
     authedFetch(`/projects/${id}`).then((r) => r.json()).then(setProject);
-    const sub = supabase
-      .channel("projects")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "projects", filter: `id=eq.${id}` }, (p) => setProject(p.new))
-      .subscribe();
-    return () => { sub.unsubscribe(); };
+    let unsub: (() => void) | undefined;
+    getSupabase().then((s) => {
+      const sub = s
+        .channel("projects")
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "projects", filter: `id=eq.${id}` }, (p: any) => setProject(p.new))
+        .subscribe();
+      unsub = () => sub.unsubscribe();
+    });
+    return () => unsub?.();
   }, [id]);
 
   if (!project) return <div className="p-6 text-gray-400">Loading...</div>;
