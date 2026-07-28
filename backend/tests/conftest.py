@@ -37,12 +37,16 @@ def mock_httpx():
 @pytest.fixture
 def test_client(mock_deps):
     from main import app
+    from api.deps import get_user_id
+    app.dependency_overrides[get_user_id] = lambda: "test-user-id"
     return TestClient(app)
 
 
 @pytest.fixture
 async def async_client(mock_deps):
     from main import app
+    from api.deps import get_user_id
     from httpx import AsyncClient as AC
+    app.dependency_overrides[get_user_id] = lambda: "test-user-id"
     async with AC(app=app, base_url="http://test") as client:
         yield client

@@ -1,6 +1,8 @@
 import asyncio
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from config import settings
+import database
 import httpx
 
 OMNIROUTER_MODEL = "deepseek-v4-flash-free"
@@ -10,9 +12,26 @@ MAX_DELAY = 30.0
 
 
 class BaseAgent(ABC):
+    def __init__(self):
+        self._current_task_id: str | None = None
+
     @abstractmethod
     async def execute(self, task_id: str) -> None:
         ...
+
+    async def log(self, message: str) -> None:
+        """Append a log entry to the task's logs field (pushes to Realtime)."""
+        if not self._current_task_id:
+            return
+        try:
+            supabase = database.get_supabase()
+            entry = {"timestamp": datetime.now(timezone.utc).isoformat(), "message": message}
+            task = supabase.table("agent_tasks").select("logs").eq("id", self._current_task_id).execute()
+            existing = task.data[0].get("logs") or [] if task.data else []
+            existing.append(entry)
+            supabase.table("agent_tasks").update({"logs": existing}).eq("id", self._current_task_id).execute()
+        except Exception:
+            pass
 
     async def call_llm(
         self, system_prompt: str, user_prompt: str

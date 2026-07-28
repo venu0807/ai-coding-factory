@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase, API_BASE } from "../lib/supabase";
+import { supabase, authedFetch } from "../lib/supabase";
 import AgentTimeline from "../components/AgentTimeline";
 import FileTree from "../components/FileTree";
 
@@ -10,7 +10,7 @@ export default function Project() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`${API_BASE}/projects/${id}`).then((r) => r.json()).then(setProject);
+    authedFetch(`/projects/${id}`).then((r) => r.json()).then(setProject);
     const sub = supabase
       .channel("projects")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "projects", filter: `id=eq.${id}` }, (p) => setProject(p.new))

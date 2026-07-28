@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE } from "../lib/supabase";
+import { authedFetch } from "../lib/supabase";
 
 export default function NewProjectForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState("");
@@ -8,9 +8,8 @@ export default function NewProjectForm({ onCreated }: { onCreated: () => void })
 
   const create = async () => {
     setLoading(true);
-    await fetch(`${API_BASE}/projects`, {
+    await authedFetch("/projects", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, description }),
     });
     setLoading(false);

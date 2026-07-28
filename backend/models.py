@@ -9,6 +9,7 @@ class ProjectCreate(BaseModel):
 
 class Project(BaseModel):
     id: UUID
+    user_id: str
     name: str
     description: Optional[str] = None
     status: str = "idle"

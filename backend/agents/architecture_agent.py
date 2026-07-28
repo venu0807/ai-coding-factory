@@ -16,7 +16,9 @@ Return ONLY valid JSON with these fields:
 
 class ArchitectureAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
+        self._current_task_id = task_id
         supabase = database.get_supabase()
+        await self.log("Starting architecture design...")
         task = supabase.table("agent_tasks").select("*").eq("id", task_id).execute()
         if not task.data:
             return
@@ -24,9 +26,11 @@ class ArchitectureAgent(BaseAgent):
         spec = task_data["input_data"].get("spec", "")
 
         try:
+            await self.log("Analyzing specification and designing system architecture...")
             result = await self.call_llm(SYSTEM_PROMPT, spec)
             parsed = self._parse_json(result)
             now = datetime.now(timezone.utc).isoformat()
+            await self.log("Architecture complete, chaining to Coding Agent")
 
             supabase.table("agent_tasks").update({
                 "status": "completed",
@@ -34,7 +38,6 @@ class ArchitectureAgent(BaseAgent):
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-            # Trigger Coding Agent with enriched spec
             enriched_spec = json.dumps({
                 "original_spec": spec,
                 "architecture": parsed,
@@ -48,6 +51,7 @@ class ArchitectureAgent(BaseAgent):
 
         except Exception as e:
             now = datetime.now(timezone.utc).isoformat()
+            await self.log(f"Failed: {str(e)}")
             supabase.table("agent_tasks").update({
                 "status": "failed",
                 "error": str(e),

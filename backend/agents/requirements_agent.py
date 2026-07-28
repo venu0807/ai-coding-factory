@@ -15,7 +15,9 @@ Return ONLY valid JSON with these fields:
 
 class RequirementsAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
+        self._current_task_id = task_id
         supabase = database.get_supabase()
+        await self.log("Starting requirements analysis...")
         task = supabase.table("agent_tasks").select("*").eq("id", task_id).execute()
         if not task.data:
             return
@@ -23,8 +25,10 @@ class RequirementsAgent(BaseAgent):
         prompt = task_data["input_data"].get("prompt", "")
 
         try:
+            await self.log("Analyzing request and generating specification...")
             result = await self.call_llm(SYSTEM_PROMPT, prompt)
             now = datetime.now(timezone.utc).isoformat()
+            await self.log("Specification complete, chaining to Architecture Agent")
             supabase.table("agent_tasks").update({
                 "status": "completed",
                 "output_data": {"spec": result},
@@ -40,6 +44,7 @@ class RequirementsAgent(BaseAgent):
 
         except Exception as e:
             now = datetime.now(timezone.utc).isoformat()
+            await self.log(f"Failed: {str(e)}")
             supabase.table("agent_tasks").update({
                 "status": "failed",
                 "error": str(e),

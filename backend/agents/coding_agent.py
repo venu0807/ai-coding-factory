@@ -14,7 +14,9 @@ Use modern best practices for each language."""
 
 class CodingAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
+        self._current_task_id = task_id
         supabase = database.get_supabase()
+        await self.log("Starting code generation...")
         task = supabase.table("agent_tasks").select("*").eq("id", task_id).execute()
         if not task.data:
             return
@@ -22,25 +24,28 @@ class CodingAgent(BaseAgent):
         spec = task_data["input_data"].get("spec", "")
 
         try:
+            await self.log("Calling LLM to generate code from specification...")
             result = await self.call_llm(SYSTEM_PROMPT, spec)
             files = self._parse_files(result)
+            await self.log(f"Generated {len(files)} files")
 
-            for f in files:
+            for i, f in enumerate(files):
                 supabase.table("generated_files").insert({
                     "task_id": task_id,
                     "file_path": f["file_path"],
                     "content": f["content"],
                     "language": f.get("language"),
                 }).execute()
+                await self.log(f"  [{i+1}/{len(files)}] Saved {f['file_path']}")
 
             now = datetime.now(timezone.utc).isoformat()
+            await self.log("Code generation complete, chaining to Deployment Agent")
             supabase.table("agent_tasks").update({
                 "status": "completed",
                 "output_data": {"file_count": len(files)},
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-            # Chain to deployment agent
             supabase.table("agent_tasks").insert({
                 "project_id": task_data["project_id"],
                 "agent_type": "deployment",
@@ -50,6 +55,7 @@ class CodingAgent(BaseAgent):
 
         except Exception as e:
             now = datetime.now(timezone.utc).isoformat()
+            await self.log(f"Failed: {str(e)}")
             supabase.table("agent_tasks").update({
                 "status": "failed",
                 "error": str(e),

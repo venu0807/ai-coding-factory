@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE } from "../lib/supabase";
+import { authedFetch } from "../lib/supabase";
 import ProjectCard from "../components/ProjectCard";
 import NewProjectForm from "../components/NewProjectForm";
 
@@ -7,7 +7,7 @@ export default function Index() {
   const [projects, setProjects] = useState([]);
 
   const load = async () => {
-    const res = await fetch(`${API_BASE}/projects`);
+    const res = await authedFetch("/projects");
     setProjects(await res.json());
   };
 
