@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException
-from database import get_supabase
+import database
 
 router = APIRouter(prefix="/projects/{project_id}", tags=["tasks"])
 
 @router.get("/tasks")
 async def list_tasks(project_id: str):
-    supabase = get_supabase()
+    supabase = database.get_supabase()
     result = supabase.table("agent_tasks") \
         .select("*") \
         .eq("project_id", project_id) \
@@ -15,7 +15,7 @@ async def list_tasks(project_id: str):
 
 @router.get("/files")
 async def list_files(project_id: str):
-    supabase = get_supabase()
+    supabase = database.get_supabase()
     tasks = supabase.table("agent_tasks") \
         .select("id") \
         .eq("project_id", project_id) \

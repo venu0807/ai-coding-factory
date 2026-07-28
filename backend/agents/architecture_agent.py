@@ -3,16 +3,18 @@ from datetime import datetime, timezone
 from agents.base import BaseAgent
 import database
 
-SYSTEM_PROMPT = """You are a senior software engineer. Given a specification, generate complete code files.
-Return ONLY valid JSON — an array of objects with:
-- file_path: relative path (e.g. "src/index.ts")
-- content: full file content
-- language: programming language
+SYSTEM_PROMPT = """You are a senior software architect. Given a product specification, produce a detailed technical architecture plan.
+Return ONLY valid JSON with these fields:
+- tech_stack: detailed technology choices with rationale
+- data_model: array of table/model definitions with {name, fields (name, type, constraints), relationships}
+- api_contracts: array of endpoint definitions with {method, path, request_body, response, auth_required}
+- component_tree: array of component specs with {name, path, responsibilities, dependencies}
+- file_structure: array of file paths to create
+- implementation_order: array of phase objects with {phase, files, description}
+- key_design_decisions: array of {decision, rationale, alternatives_considered}"""
 
-Generate real, working code. Include package.json, configs, all source files.
-Use modern best practices for each language."""
 
-class CodingAgent(BaseAgent):
+class ArchitectureAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
         supabase = database.get_supabase()
         task = supabase.table("agent_tasks").select("*").eq("id", task_id).execute()
@@ -23,29 +25,25 @@ class CodingAgent(BaseAgent):
 
         try:
             result = await self.call_llm(SYSTEM_PROMPT, spec)
-            files = self._parse_files(result)
-
-            for f in files:
-                supabase.table("generated_files").insert({
-                    "task_id": task_id,
-                    "file_path": f["file_path"],
-                    "content": f["content"],
-                    "language": f.get("language"),
-                }).execute()
-
+            parsed = self._parse_json(result)
             now = datetime.now(timezone.utc).isoformat()
+
             supabase.table("agent_tasks").update({
                 "status": "completed",
-                "output_data": {"file_count": len(files)},
+                "output_data": {"architecture": parsed},
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-            # Chain to deployment agent
+            # Trigger Coding Agent with enriched spec
+            enriched_spec = json.dumps({
+                "original_spec": spec,
+                "architecture": parsed,
+            })
             supabase.table("agent_tasks").insert({
                 "project_id": task_data["project_id"],
-                "agent_type": "deployment",
+                "agent_type": "coding",
                 "status": "pending",
-                "input_data": {"task_id": task_id, "file_count": len(files)},
+                "input_data": {"spec": enriched_spec},
             }).execute()
 
         except Exception as e:
@@ -56,7 +54,7 @@ class CodingAgent(BaseAgent):
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-    def _parse_files(self, raw: str) -> list[dict]:
+    def _parse_json(self, raw: str) -> dict:
         cleaned = raw.strip()
         if cleaned.startswith("```json"):
             cleaned = cleaned[7:]
@@ -64,7 +62,4 @@ class CodingAgent(BaseAgent):
             cleaned = cleaned[3:]
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
-        parsed = json.loads(cleaned)
-        if isinstance(parsed, dict) and "files" in parsed:
-            return parsed["files"]
-        return parsed if isinstance(parsed, list) else []
+        return json.loads(cleaned)

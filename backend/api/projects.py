@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from models import ProjectCreate
-from database import get_supabase
+import database
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.post("", response_model=dict)
 async def create_project(body: ProjectCreate):
-    supabase = get_supabase()
+    supabase = database.get_supabase()
     result = supabase.table("projects").insert({
         "name": body.name,
         "description": body.description,
@@ -24,13 +24,13 @@ async def create_project(body: ProjectCreate):
 
 @router.get("", response_model=list[dict])
 async def list_projects():
-    supabase = get_supabase()
+    supabase = database.get_supabase()
     result = supabase.table("projects").select("*").order("created_at", desc=True).execute()
     return result.data
 
 @router.get("/{project_id}", response_model=dict)
 async def get_project(project_id: str):
-    supabase = get_supabase()
+    supabase = database.get_supabase()
     result = supabase.table("projects").select("*").eq("id", project_id).execute()
     if not result.data:
         raise HTTPException(404, "Project not found")

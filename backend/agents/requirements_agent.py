@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from agents.base import BaseAgent
-from database import get_supabase
+import database
 
 SYSTEM_PROMPT = """You are a technical product manager. Given a user's project idea, produce a structured specification.
 Return ONLY valid JSON with these fields:
@@ -15,14 +15,12 @@ Return ONLY valid JSON with these fields:
 
 class RequirementsAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
-        supabase = get_supabase()
+        supabase = database.get_supabase()
         task = supabase.table("agent_tasks").select("*").eq("id", task_id).execute()
         if not task.data:
             return
         task_data = task.data[0]
         prompt = task_data["input_data"].get("prompt", "")
-
-        supabase.table("agent_tasks").update({"status": "running"}).eq("id", task_id).execute()
 
         try:
             result = await self.call_llm(SYSTEM_PROMPT, prompt)
@@ -35,7 +33,7 @@ class RequirementsAgent(BaseAgent):
 
             supabase.table("agent_tasks").insert({
                 "project_id": task_data["project_id"],
-                "agent_type": "coding",
+                "agent_type": "architecture",
                 "status": "pending",
                 "input_data": {"spec": result},
             }).execute()
