@@ -4,6 +4,7 @@ os.environ["OMNIROUTER_BASE_URL"] = "https://api.omnirouter.ai/v1"
 os.environ["SUPABASE_URL"] = "https://test.supabase.co"
 os.environ["SUPABASE_KEY"] = "test-key"
 os.environ["POLL_INTERVAL_SECONDS"] = "2"
+os.environ["LLM_MOCK"] = "false"
 
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient

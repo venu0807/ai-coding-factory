@@ -12,6 +12,22 @@ BASE_DELAY = 2.0
 MAX_DELAY = 30.0
 
 
+MOCK_RESPONSES: dict[str, str] = {
+    "requirements": """{"name": "Todo App", "description": "A task management app", "features": [{"name": "CRUD Tasks", "priority": "P0", "description": "Create, read, update, delete tasks"}], "tech_stack": ["React", "FastAPI", "PostgreSQL"], "api_endpoints": ["GET /tasks", "POST /tasks", "PUT /tasks/:id", "DELETE /tasks/:id"], "data_models": [{"name": "Task", "fields": ["id", "title", "description", "status", "created_at"]}], "user_stories": ["As a user, I can create a task", "As a user, I can view my tasks"]}""",  # noqa: E501
+    "architecture": """{"tech_stack": [{"technology": "React", "version": "19", "purpose": "UI", "rationale": "Popular"}], "data_model": [{"name": "Task", "fields": [{"name": "id", "type": "uuid", "constraints": "PK"}], "relationships": []}], "api_contracts": [{"method": "GET", "path": "/tasks", "request_body": null, "response_shape": "array", "auth_required": true, "rate_limit": 100}], "component_tree": [{"name": "App", "path": "src/App.tsx", "responsibilities": "Routing", "dependencies": [], "interface": ""}], "file_structure": [{"path": "src/App.tsx", "purpose": "Entry point", "depends_on": []}], "implementation_order": [{"phase": "1", "files": ["src/App.tsx"], "description": "Setup", "estimated_effort": "2h"}], "key_design_decisions": [{"decision": "Use React", "rationale": "Familiar", "alternatives_considered": ["Vue"], "chosen_approach": "React"}], "error_handling": {"strategy": "try/catch", "retry_policy": "3 retries", "error_response_format": "json"}, "security_considerations": [{"concern": "Auth", "mitigation": "JWT"}]}""",  # noqa: E501
+    "coding": """[{"file_path": "src/index.ts", "content": "console.log('hello');", "language": "typescript"}, {"file_path": "src/tasks.ts", "content": "export interface Task { id: string; title: string; status: string; }", "language": "typescript"}]""",  # noqa: E501
+    "code_review": """{"summary": "Code looks good overall. Minor issues found.", "overall_score": "pass_with_issues", "findings": [{"file": "src/index.ts", "line": 1, "severity": "info", "dimension": "code_quality", "message": "Missing error handling", "suggestion": "Add try/catch around main logic"}]}""",  # noqa: E501
+    "deployment": """{"platform": "docker", "config_files": [{"path": "Dockerfile", "content": "FROM node:20-alpine\\nWORKDIR /app\\nCOPY . .\\nRUN npm install\\nCMD [\\"npm\\", \\"start\\"]"}], "build_steps": ["docker build -t app .", "docker run -p 3000:3000 app"], "health_check_url": "/health", "environment_variables": [{"key": "NODE_ENV", "value": "production"}]}""",  # noqa: E501
+}
+
+
+def _mock_response(agent_type: str) -> str:
+    """Return a mock LLM response based on agent type."""
+    # Normalize: __class__.__name__ "Codereview" → "code_review"
+    key = agent_type.replace("review", "_review")
+    return MOCK_RESPONSES.get(key, MOCK_RESPONSES["coding"])
+
+
 class BaseAgent(ABC):
     def __init__(self):
         self._current_task_id: str | None = None
@@ -37,6 +53,11 @@ class BaseAgent(ABC):
     async def call_llm(
         self, system_prompt: str, user_prompt: str
     ) -> str:
+        if settings.llm_mock:
+            agent_type = self.__class__.__name__.replace("Agent", "").lower()
+            mock = _mock_response(agent_type)
+            await self.log(f"[MOCK] {agent_type}: returning mock response")
+            return mock
         last_err = None
         for attempt in range(1, MAX_RETRIES + 1):
             try:

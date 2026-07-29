@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_key: str
     poll_interval_seconds: int = 2
+    llm_mock: bool = False
 
     model_config = {"env_file": ".env", "case_sensitive": False}
 

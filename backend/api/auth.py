@@ -47,22 +47,21 @@ def _make_fake_token(email: str) -> str:
 @router.post("/signup")
 async def signup(body: SignupRequest):
     # Try Supabase first
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(
-                f"{SUPABASE_AUTH_URL}/signup",
-                headers={
-                    "apikey": settings.supabase_key,
-                    "Content-Type": "application/json",
-                },
-                json={"email": body.email, "password": body.password},
-            )
-            if resp.status_code < 400:
-                return resp.json()
-            if resp.status_code != 429:
-                raise HTTPException(status_code=resp.status_code, detail=resp.json().get("msg", "Signup failed"))
-    except httpx.HTTPError:
-        pass
+    if settings.supabase_url and settings.supabase_key:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    f"{SUPABASE_AUTH_URL}/signup",
+                    headers={
+                        "apikey": settings.supabase_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={"email": body.email, "password": body.password},
+                )
+                if resp.status_code < 400:
+                    return resp.json()
+        except httpx.HTTPError:
+            pass
 
     # Fallback to local auth
     users = _load_users()
