@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { getSupabase, authedFetch } from "../lib/supabase";
+import { toast } from "../lib/toast";
 
 interface Task {
   id: string;
@@ -19,11 +20,16 @@ export default function AgentTimeline({
   projectId: string;
 }) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [retrying, setRetrying] = useState<string | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
-    const res = await authedFetch(`/projects/${projectId}/tasks`);
-    setTasks(await res.json());
+    try {
+      const res = await authedFetch(`/projects/${projectId}/tasks`);
+      setTasks(await res.json());
+    } catch {
+      // Network error — component stays in empty state
+    }
   };
 
   useEffect(() => {
@@ -42,6 +48,19 @@ export default function AgentTimeline({
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [tasks]);
+
+  const handleRetry = async (taskId: string) => {
+    setRetrying(taskId);
+    try {
+      await authedFetch(`/projects/${projectId}/tasks/${taskId}/retry`, { method: "POST" });
+      toast.success("Task queued for retry");
+      load();
+    } catch {
+      toast.error("Retry failed");
+    } finally {
+      setRetrying(null);
+    }
+  };
 
   const badge = (status: string) => {
     const m: Record<string, string> = {
@@ -70,11 +89,20 @@ export default function AgentTimeline({
             <span className="font-medium capitalize">
               {t.agent_type} agent
             </span>
-            <span
-              className={`text-xs px-2 py-1 rounded-full ${badge(t.status)}`}
-            >
-              {t.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2 py-1 rounded-full ${badge(t.status)}`}>
+                {t.status}
+              </span>
+              {t.status === "failed" && (
+                <button
+                  onClick={() => handleRetry(t.id)}
+                  disabled={retrying === t.id}
+                  className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                >
+                  {retrying === t.id ? "..." : "Retry"}
+                </button>
+              )}
+            </div>
           </div>
           {t.status === "running" && (
             <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">

@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime, timezone
 from agents.base import BaseAgent
@@ -20,7 +19,7 @@ Rules:
 - Generate real config files (Dockerfile, vercel.json, fly.toml, Dockerfile.railway) matching the tech stack
 - Include a health check that actually works for the given stack
 - Include monitoring/logging recommendations
-- Output must be parseable JSON — no markdown fences, no extra text"""
+- Output must be valid JSON wrapped in markdown code block"""
 
 
 class DeploymentAgent(BaseAgent):
@@ -64,7 +63,7 @@ class DeploymentAgent(BaseAgent):
         try:
             await self.log("Generating deployment configuration...")
             result = await self.call_llm(DEPLOY_SYSTEM_PROMPT, prompt)
-            parsed = self._parse_json(result)
+            parsed = self.parse_json(result)
             now = datetime.now(timezone.utc).isoformat()
 
             await self.log(f"Deploy platform: {parsed.get('platform', 'unknown')}")
@@ -152,12 +151,3 @@ class DeploymentAgent(BaseAgent):
         client.close()
         return {"repo": f"https://github.com/{repo_full}", "deploy_url": deploy_config.get("health_check_url")}
 
-    def _parse_json(self, raw: str) -> dict:
-        cleaned = raw.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-        return json.loads(cleaned)

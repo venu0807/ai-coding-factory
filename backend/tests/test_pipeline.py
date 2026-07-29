@@ -59,8 +59,8 @@ async def test_architecture_agent_creates_coding_task(mock_deps, mock_httpx):
 
 
 @pytest.mark.asyncio
-async def test_coding_agent_creates_deployment_task(mock_deps, mock_httpx):
-    """Coding completes → creates deployment agent task."""
+async def test_coding_agent_creates_code_review_task(mock_deps, mock_httpx):
+    """Coding completes → creates code_review agent task (not deployment directly)."""
 
     mock_deps.execute.return_value.data = [
         {"id": "code-1", "project_id": "proj-1", "input_data": {"spec": MOCK_SPEC}}
@@ -76,8 +76,8 @@ async def test_coding_agent_creates_deployment_task(mock_deps, mock_httpx):
 
     mock_httpx.post.assert_called()
     insert_calls = mock_deps.table.return_value.insert.call_args_list
-    deploy_inserts = [c for c in insert_calls if c[0][0].get("agent_type") == "deployment"]
-    assert len(deploy_inserts) >= 1
+    review_inserts = [c for c in insert_calls if c[0][0].get("agent_type") == "code_review"]
+    assert len(review_inserts) >= 1
 
 
 @pytest.mark.asyncio

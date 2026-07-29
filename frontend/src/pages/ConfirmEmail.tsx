@@ -12,7 +12,7 @@ export default function ConfirmEmail() {
     if (token && type === 'signup') {
       getSupabase().then((s) =>
         s.auth.verifyOtp({ token_hash: token, type: 'signup' })
-          .then(({ error }) => setStatus(error ? 'error' : 'success'))
+          .then(({ error }: { error?: any }) => setStatus(error ? 'error' : 'success'))
           .catch(() => setStatus('error'))
       );
     } else {

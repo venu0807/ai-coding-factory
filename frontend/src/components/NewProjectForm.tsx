@@ -39,7 +39,7 @@ export default function NewProjectForm({
     <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
       <h2 className="text-lg font-semibold mb-4">New Project</h2>
       <input
-        className="w-full border rounded-lg px-3 py-2 mb-1"
+        className="w-full border rounded-lg px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
         placeholder="Project name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -48,7 +48,7 @@ export default function NewProjectForm({
         <p className="text-red-500 text-xs mb-3">{fieldError}</p>
       )}
       <textarea
-        className="w-full border rounded-lg px-3 py-2 mb-3"
+        className="w-full border rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
         placeholder="Describe what you want to build..."
         rows={3}
         value={description}

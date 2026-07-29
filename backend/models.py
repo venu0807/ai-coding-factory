@@ -7,6 +7,10 @@ class ProjectCreate(BaseModel):
     name: str
     description: Optional[str] = None
 
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
 class Project(BaseModel):
     id: UUID
     user_id: str

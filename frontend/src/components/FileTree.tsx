@@ -55,8 +55,12 @@ export default function FileTree({
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch(`${API_BASE}/projects/${projectId}/files`);
-      setFiles(await res.json());
+      try {
+        const res = await fetch(`${API_BASE}/projects/${projectId}/files`);
+        setFiles(await res.json());
+      } catch {
+        // Network error — component shows empty state
+      }
     };
     load();
   }, [projectId]);

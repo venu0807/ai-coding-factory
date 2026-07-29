@@ -13,13 +13,23 @@ export default function Project() {
   const [project, setProject] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [saving, setSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fetchErr, setFetchErr] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+    setFetchErr(false);
     authedFetch(`/projects/${id}`)
-      .then((r) => r.json())
-      .then(setProject);
+      .then((r) => {
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
+      })
+      .then(setProject)
+      .catch(() => setFetchErr(true));
     let unsub: (() => void) | undefined;
     getSupabase().then((s) => {
       const sub = s
@@ -78,6 +88,54 @@ export default function Project() {
     }
   };
 
+  const startEditing = () => {
+    setEditName(project.name);
+    setEditDesc(project.description || "");
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+  };
+
+  const saveEditing = async () => {
+    if (!editName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await authedFetch(`/projects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDesc.trim() || null,
+        }),
+      });
+      const updated = await res.json();
+      setProject(updated);
+      setEditing(false);
+      toast.success("Project updated");
+    } catch {
+      toast.error("Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (fetchErr)
+    return (
+      <div className="max-w-6xl mx-auto p-6 pt-8 text-center">
+        <h2 className="text-xl font-bold text-red-600 mb-2">Project not found</h2>
+        <p className="text-gray-500 text-sm mb-4">
+          Could not load this project. It may have been deleted.
+        </p>
+        <Link to="/" className="text-green-600 text-sm hover:underline">
+          ← Back to projects
+        </Link>
+      </div>
+    );
+
   if (!project)
     return (
       <div className="max-w-6xl mx-auto p-6 pt-8">
@@ -95,27 +153,69 @@ export default function Project() {
       <Link to="/" className="text-green-600 text-sm mb-4 block">
         ← Back to projects
       </Link>
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
-        <h1 className="text-3xl font-bold break-all">{project.name}</h1>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {downloading ? "Downloading..." : "Download ZIP"}
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
-          >
-            {deleting ? "Deleting..." : "Delete"}
-          </button>
+
+      {editing ? (
+        <div className="mb-6">
+          <input
+            className="w-full border rounded-lg px-3 py-2 mb-2 text-xl font-bold"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Project name"
+          />
+          <textarea
+            className="w-full border rounded-lg px-3 py-2 mb-2"
+            rows={2}
+            value={editDesc}
+            onChange={(e) => setEditDesc(e.target.value)}
+            placeholder="Description (optional)"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={saveEditing}
+              disabled={saving}
+              className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={cancelEditing}
+              className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1.5"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
-      {project.description && (
-        <p className="text-gray-500 mb-6">{project.description}</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+            <h1 className="text-3xl font-bold break-all">{project.name}</h1>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={startEditing}
+                className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg border"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {downloading ? "Downloading..." : "Download ZIP"}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+          {project.description && (
+            <p className="text-gray-500 mb-6">{project.description}</p>
+          )}
+        </>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

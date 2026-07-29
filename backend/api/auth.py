@@ -105,6 +105,25 @@ async def login(body: LoginRequest):
     return {"access_token": token, "token_type": "bearer", "user": {"id": user["id"], "email": body.email}}
 
 
+@router.post("/reset-password")
+async def reset_password(body: SignupRequest):
+    supabase_url = settings.supabase_url
+    if not supabase_url:
+        return {"message": "Password reset not available in local mode"}
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(
+            f"{SUPABASE_AUTH_URL}/recover",
+            headers={
+                "apikey": settings.supabase_key,
+                "Content-Type": "application/json",
+            },
+            json={"email": body.email},
+        )
+        if resp.status_code >= 400:
+            raise HTTPException(status_code=resp.status_code, detail=resp.json().get("msg", "Reset failed"))
+        return {"message": "Check your email for reset link"}
+
+
 @router.get("/me")
 async def get_user():
     return {"message": "Send Authorization: Bearer <token> header"}

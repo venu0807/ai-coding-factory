@@ -1,4 +1,5 @@
 import asyncio
+import json
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from config import settings
@@ -73,3 +74,44 @@ class BaseAgent(ABC):
         raise RuntimeError(
             f"call_llm failed after {MAX_RETRIES} retries"
         ) from last_err
+
+    def clean_json(self, raw: str) -> str:
+        """Strip markdown fences and leading/trailing whitespace from LLM output."""
+        cleaned = raw.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        return cleaned.strip()
+
+    def parse_json(self, raw: str) -> dict | list:
+        """Parse LLM output as JSON after cleaning."""
+        return json.loads(self.clean_json(raw))
+
+    async def call_llm_json(
+        self, system_prompt: str, user_prompt: str
+    ) -> dict | list:
+        """Call LLM and parse JSON result. Retries once on parse failure with format repair."""
+        for attempt in range(1, 3):
+            result = await self.call_llm(system_prompt, user_prompt)
+            try:
+                return self.parse_json(result)
+            except json.JSONDecodeError:
+                if attempt == 1:
+                    # Ask the LLM to fix JSON formatting
+                    fix_prompt = (
+                        f"The following response is not valid JSON. "
+                        f"Remove all markdown fences, extra text, and trailing commas.\n\n"
+                        f"{result}"
+                    )
+                    result = await self.call_llm(
+                        "You are a JSON repair tool. Return ONLY valid JSON. No markdown.",
+                        fix_prompt,
+                    )
+                    try:
+                        return self.parse_json(result)
+                    except json.JSONDecodeError:
+                        pass
+                raise

@@ -5,8 +5,17 @@ import database
 
 SYSTEM_PROMPT = """You are a senior software engineer at a top tech company. Given a specification and architecture, generate complete, production-ready code files.
 
-Return ONLY valid JSON — an array of objects with:
-- file_path: relative path (e.g. "src/index.ts")
+Return ONLY valid JSON — an array of objects:
+[
+  {
+    "file_path": "src/index.ts",
+    "content": "console.log('hello');",
+    "language": "typescript"
+  }
+]
+
+Each object has:
+- file_path: relative path
 - content: full file content with all imports and exports
 - language: programming language
 
@@ -24,6 +33,15 @@ REQUIREMENTS:
 The code will be reviewed by a senior engineer. Make it production-quality."""
 
 class CodingAgent(BaseAgent):
+    def _parse_files(self, raw: str) -> list[dict]:
+        """Parse LLM output as file list — handles arrays and {files: [...]} wrappers."""
+        parsed = self.parse_json(raw)
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict):
+            return parsed.get("files", parsed) if isinstance(parsed.get("files"), list) else []
+        return []
+
     async def execute(self, task_id: str) -> None:
         self._current_task_id = task_id
         supabase = database.get_supabase()
@@ -73,15 +91,3 @@ class CodingAgent(BaseAgent):
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-    def _parse_files(self, raw: str) -> list[dict]:
-        cleaned = raw.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-        parsed = json.loads(cleaned)
-        if isinstance(parsed, dict) and "files" in parsed:
-            return parsed["files"]
-        return parsed if isinstance(parsed, list) else []

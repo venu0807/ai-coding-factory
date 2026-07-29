@@ -23,10 +23,12 @@ export async function signIn(email: string, password: string) {
   return res.json();
 }
 
-export async function signOut() {
-  // Clear local session state
-}
-
-export async function getSession() {
-  return null;
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error("Reset failed");
+  return res.json();
 }

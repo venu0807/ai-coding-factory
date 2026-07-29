@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+from datetime import datetime, timezone
 import database
 import io
 import zipfile
@@ -32,6 +33,23 @@ async def list_files(project_id: str):
         .order("file_path") \
         .execute()
     return result.data
+
+
+@router.post("/tasks/{task_id}/retry")
+async def retry_task(project_id: str, task_id: str):
+    supabase = database.get_supabase()
+    task = supabase.table("agent_tasks").select("*").eq("id", task_id).eq("project_id", project_id).execute()
+    if not task.data:
+        raise HTTPException(404, "Task not found")
+    supabase.table("agent_tasks").update({
+        "status": "pending",
+        "error": None,
+        "output_data": None,
+        "logs": [],
+        "completed_at": None,
+        "started_at": None,
+    }).eq("id", task_id).execute()
+    return {"ok": True}
 
 
 @router.get("/download")

@@ -8,6 +8,8 @@ import Project from "./pages/Project";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ConfirmEmail from "./pages/ConfirmEmail";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
           <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
           <Route path="/confirm-email" element={<ErrorBoundary><ConfirmEmail /></ErrorBoundary>} />
+          <Route path="/reset-password" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

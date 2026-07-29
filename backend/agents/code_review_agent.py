@@ -35,6 +35,13 @@ If no significant issues found, return {"summary": "Code looks good", "findings"
 
 
 class CodeReviewAgent(BaseAgent):
+    def _parse_review(self, raw: str) -> dict:
+        """Parse LLM output as review JSON — returns fallback on parse failure."""
+        try:
+            return self.parse_json(raw)
+        except (json.JSONDecodeError, TypeError):
+            return {"summary": "Failed to parse review", "findings": []}
+
     async def execute(self, task_id: str) -> None:
         self._current_task_id = task_id
         supabase = database.get_supabase()
@@ -102,18 +109,3 @@ class CodeReviewAgent(BaseAgent):
             },
         }).execute()
 
-    def _parse_review(self, raw: str) -> dict:
-        cleaned = raw.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, dict) and "findings" in parsed:
-                return parsed
-        except json.JSONDecodeError:
-            pass
-        return {"summary": "Failed to parse review", "findings": []}

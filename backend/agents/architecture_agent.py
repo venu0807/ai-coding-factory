@@ -20,7 +20,7 @@ Rules:
 - Make concrete technology choices with specific versions.
 - Include error handling and security from the start.
 - Consider scaling and performance.
-- output must be parseable JSON — no markdown fences, no extra text."""
+- output must be valid JSON wrapped in markdown code block."""
 
 
 class ArchitectureAgent(BaseAgent):
@@ -37,7 +37,7 @@ class ArchitectureAgent(BaseAgent):
         try:
             await self.log("Analyzing specification and designing system architecture...")
             result = await self.call_llm(SYSTEM_PROMPT, spec)
-            parsed = self._parse_json(result)
+            parsed = self.parse_json(result)
             now = datetime.now(timezone.utc).isoformat()
             await self.log("Architecture complete, chaining to Coding Agent")
 
@@ -67,12 +67,3 @@ class ArchitectureAgent(BaseAgent):
                 "completed_at": now,
             }).eq("id", task_id).execute()
 
-    def _parse_json(self, raw: str) -> dict:
-        cleaned = raw.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-        return json.loads(cleaned)

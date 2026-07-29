@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from models import ProjectCreate
+from models import ProjectCreate, ProjectUpdate
 from api.deps import get_user_id
 import database
 
@@ -34,6 +34,21 @@ async def list_projects(user_id: str = Depends(get_user_id)):
 async def get_project(project_id: str, user_id: str = Depends(get_user_id)):
     supabase = database.get_supabase()
     result = supabase.table("projects").select("*").eq("id", project_id).eq("user_id", user_id).execute()
+    if not result.data:
+        raise HTTPException(404, "Project not found")
+    return result.data[0]
+
+@router.patch("/{project_id}")
+async def update_project(project_id: str, body: ProjectUpdate, user_id: str = Depends(get_user_id)):
+    supabase = database.get_supabase()
+    updates = {}
+    if body.name is not None:
+        updates["name"] = body.name
+    if body.description is not None:
+        updates["description"] = body.description
+    if not updates:
+        raise HTTPException(400, "No fields to update")
+    result = supabase.table("projects").update(updates).eq("id", project_id).eq("user_id", user_id).execute()
     if not result.data:
         raise HTTPException(404, "Project not found")
     return result.data[0]

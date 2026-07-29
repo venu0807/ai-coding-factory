@@ -20,7 +20,7 @@ Rules:
 - Be specific about tech choices. No "it depends" — pick the best stack.
 - Prioritize features (P0 = must have for MVP).
 - Keep api_endpoints and data_models focused on what's needed for MVP.
-- output must be parseable JSON — no markdown fences, no extra text."""
+- output must be valid JSON wrapped in markdown code block."""
 
 class RequirementsAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
