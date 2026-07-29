@@ -1,27 +1,32 @@
-import { getSupabase } from './supabase';
+import { authedFetch, API_BASE } from './supabase';
 
 export async function signUp(email: string, password: string) {
-  const s = await getSupabase();
-  const { data, error } = await s.auth.signUp({ email, password });
-  if (error) throw error;
-  return data;
+  const res = await fetch(`${API_BASE}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || err.msg || "Signup failed");
+  }
+  return res.json();
 }
 
 export async function signIn(email: string, password: string) {
-  const s = await getSupabase();
-  const { data, error } = await s.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) throw new Error("Invalid credentials");
+  return res.json();
 }
 
 export async function signOut() {
-  const s = await getSupabase();
-  const { error } = await s.auth.signOut();
-  if (error) throw error;
+  // Clear local session state
 }
 
 export async function getSession() {
-  const s = await getSupabase();
-  const { data } = await s.auth.getSession();
-  return data.session;
+  return null;
 }

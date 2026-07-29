@@ -37,3 +37,11 @@ async def get_project(project_id: str, user_id: str = Depends(get_user_id)):
     if not result.data:
         raise HTTPException(404, "Project not found")
     return result.data[0]
+
+@router.delete("/{project_id}")
+async def delete_project(project_id: str, user_id: str = Depends(get_user_id)):
+    supabase = database.get_supabase()
+    supabase.table("agent_tasks").delete().eq("project_id", project_id).execute()
+    supabase.table("generated_files").delete().eq("project_id", project_id).execute()
+    supabase.table("projects").delete().eq("id", project_id).eq("user_id", user_id).execute()
+    return {"ok": True}

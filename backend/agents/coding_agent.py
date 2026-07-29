@@ -48,9 +48,9 @@ class CodingAgent(BaseAgent):
 
             supabase.table("agent_tasks").insert({
                 "project_id": task_data["project_id"],
-                "agent_type": "deployment",
+                "agent_type": "code_review",
                 "status": "pending",
-                "input_data": {"task_id": task_id, "file_count": len(files)},
+                "input_data": {"task_id": task_id, "spec": task_data["input_data"].get("spec", ""), "file_count": len(files)},
             }).execute()
 
         except Exception as e:

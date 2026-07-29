@@ -6,11 +6,13 @@ from agents.requirements_agent import RequirementsAgent
 from agents.architecture_agent import ArchitectureAgent
 from agents.coding_agent import CodingAgent
 from agents.deployment_agent import DeploymentAgent
+from agents.code_review_agent import CodeReviewAgent
 
 AGENT_MAP = {
     "requirements": RequirementsAgent(),
     "architecture": ArchitectureAgent(),
     "coding": CodingAgent(),
+    "code_review": CodeReviewAgent(),
     "deployment": DeploymentAgent(),
 }
 

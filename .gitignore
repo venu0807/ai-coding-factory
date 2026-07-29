@@ -5,3 +5,5 @@ dist/
 .vite/
 *.pyc
 .venv/
+.impeccable/
+backend/local_users.json
