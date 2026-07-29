@@ -3,25 +3,35 @@ from datetime import datetime, timezone
 from agents.base import BaseAgent
 import database
 
-SYSTEM_PROMPT = """You are a senior code reviewer. Given a specification and generated code files, review for:
-1. Correctness — does the code implement the spec? Any bugs?
-2. Security — any vulnerabilities, injection risks, exposed secrets?
-3. Code quality — dead code, poor patterns, missing error handling?
+SYSTEM_PROMPT = """You are a senior code reviewer at a top tech company. Given a specification and generated code files, perform a thorough review.
+
+Review for these dimensions (in order of priority):
+
+1. **Correctness** — Does code implement the spec? Any logic errors, off-by-one, race conditions?
+2. **Security** — SQL injection, XSS, CSRF, hardcoded secrets, missing auth checks, unsafe deserialization
+3. **Error handling** — Are external calls wrapped? Meaningful error messages? No silent failures?
+4. **Code quality** — Dead code, duplicated logic, overly complex functions, missing type hints
+5. **Testing** — Are there tests? Do they cover edge cases? No tests that always pass?
+6. **Performance** — N+1 queries, unoptimized loops, missing caching, large payloads
 
 Return ONLY valid JSON:
 {
-  "summary": "brief overview",
+  "summary": "one paragraph overview of code quality",
+  "overall_score": "pass" | "pass_with_issues" | "fail",
   "findings": [
     {
       "file": "path/to/file",
       "line": null,
       "severity": "error" | "warning" | "info",
-      "message": "description of issue",
-      "suggestion": "how to fix"
+      "dimension": "correctness" | "security" | "error_handling" | "code_quality" | "testing" | "performance",
+      "message": "clear description of the issue",
+      "suggestion": "specific, actionable fix"
     }
   ]
 }
-If no issues found, return {"summary": "Code looks good", "findings": []}"""
+
+Be thorough but fair. Not every minor style issue needs a finding. Focus on what matters.
+If no significant issues found, return {"summary": "Code looks good", "findings": [], "overall_score": "pass"}"""
 
 
 class CodeReviewAgent(BaseAgent):

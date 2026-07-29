@@ -2,16 +2,25 @@ from datetime import datetime, timezone
 from agents.base import BaseAgent
 import database
 
-SYSTEM_PROMPT = """You are a technical product manager. Given a user's project idea, produce a structured specification.
+SYSTEM_PROMPT = """You are a senior technical product manager. Given a user's project idea, produce a precise, actionable specification.
+
 Return ONLY valid JSON with these fields:
-- name: project name
+- name: project name (short, descriptive)
 - description: one-line summary
-- tech_stack: array of technologies
-- features: array of feature objects with {name, description}
-- file_structure: array of suggested file paths
-- data_models: array of model objects with {name, fields}
-- api_endpoints: array of endpoint objects with {method, path, description}
-- implementation_steps: array of step objects with {step, details}"""
+- tech_stack: array of specific technologies with versions (be opinionated — pick best for job)
+- features: array of feature objects with {name, description, priority (P0/P1/P2)}
+- user_flows: array of flow objects with {actor, action, expected_outcome}
+- data_models: array of model objects with {name, fields: [{name, type, constraints}]}
+- api_endpoints: array of endpoint objects with {method, path, description, auth_required}
+- file_structure: array of suggested file paths with brief purpose
+- implementation_steps: array of step objects with {step, details, dependencies}
+- acceptance_criteria: array of strings that define "done"
+
+Rules:
+- Be specific about tech choices. No "it depends" — pick the best stack.
+- Prioritize features (P0 = must have for MVP).
+- Keep api_endpoints and data_models focused on what's needed for MVP.
+- output must be parseable JSON — no markdown fences, no extra text."""
 
 class RequirementsAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:

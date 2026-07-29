@@ -79,8 +79,8 @@ export default function FileTree({
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3">Generated Files</h2>
-      <div className="flex gap-4">
-        <div className="w-64 shrink-0 max-h-96 overflow-y-auto">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-64 shrink-0 max-h-48 sm:max-h-96 overflow-y-auto">
           {files.map((f) => (
             <button
               key={f.id}

@@ -47,12 +47,12 @@ export default function CodeReview({
   if (loading) return null;
   if (!review || !review.findings?.length) return null;
 
-  const severityBorder = (s: string) =>
+  const severityBg = (s: string) =>
     s === "error"
-      ? "border-l-red-500 bg-red-50"
+      ? "bg-red-50"
       : s === "warning"
-        ? "border-l-amber-500 bg-amber-50"
-        : "border-l-blue-500 bg-blue-50";
+        ? "bg-amber-50"
+        : "bg-blue-50";
 
   const severityIcon = (s: string) =>
     s === "error" ? "🔴" : s === "warning" ? "🟡" : "🔵";
@@ -67,10 +67,9 @@ export default function CodeReview({
         {review.findings.map((f, i) => (
           <div
             key={i}
-            className={`border-l-4 rounded-r-lg p-3 ${severityBorder(f.severity)}`}
+            className={`rounded-lg p-3 ${severityBg(f.severity)}`}
           >
             <div className="flex items-start gap-2">
-              <span className="text-sm">{severityIcon(f.severity)}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">
                   {f.message}

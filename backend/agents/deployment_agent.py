@@ -4,15 +4,23 @@ from datetime import datetime, timezone
 from agents.base import BaseAgent
 import database
 
-DEPLOY_SYSTEM_PROMPT = """You are a DevOps engineer. Given generated source files, produce deployment configuration.
+DEPLOY_SYSTEM_PROMPT = """You are a senior DevOps engineer. Given generated source files, produce production-ready deployment configuration.
+
 Return ONLY valid JSON with these fields:
-- platform: "vercel" | "docker" | "fly" | "manual"
-- config_files: array of {file_path, content} for deployment configs (Dockerfile, vercel.json, fly.toml, etc.)
-- build_steps: array of shell commands to build
-- env_vars: array of {key, description, required}
-- deploy_steps: array of shell commands to deploy
+- platform: "vercel" | "docker" | "railway" | "fly" | "manual" — pick most appropriate
+- config_files: array of {file_path, content} for deployment configs
+- build_steps: array of shell commands to build (one per step)
+- env_vars: array of {key, description, required, default_value}
+- deploy_steps: array of shell commands to deploy (one per step)
 - health_check_url: string or null
-- estimated_deploy_time_seconds: number"""
+- post_deploy_checks: array of {check, command, expected_outcome}
+- estimated_deploy_time_seconds: number
+
+Rules:
+- Generate real config files (Dockerfile, vercel.json, fly.toml, Dockerfile.railway) matching the tech stack
+- Include a health check that actually works for the given stack
+- Include monitoring/logging recommendations
+- Output must be parseable JSON — no markdown fences, no extra text"""
 
 
 class DeploymentAgent(BaseAgent):
