@@ -34,12 +34,19 @@ The code will be reviewed by a senior engineer. Make it production-quality."""
 
 class CodingAgent(BaseAgent):
     def _parse_files(self, raw: str) -> list[dict]:
-        """Parse LLM output as file list — handles arrays and {files: [...]} wrappers."""
-        parsed = self.parse_json(raw)
+        """Parse LLM output as file list — handles multiple response shapes."""
+        try:
+            parsed = self.parse_json(raw)
+        except json.JSONDecodeError:
+            return []
         if isinstance(parsed, list):
             return parsed
         if isinstance(parsed, dict):
-            return parsed.get("files", parsed) if isinstance(parsed.get("files"), list) else []
+            for key in ("files", "code", "output"):
+                val = parsed.get(key)
+                if isinstance(val, list):
+                    return val
+            return []
         return []
 
     async def execute(self, task_id: str) -> None:

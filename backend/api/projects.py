@@ -24,11 +24,25 @@ async def create_project(body: ProjectCreate, user_id: str = Depends(get_user_id
 
     return project
 
-@router.get("", response_model=list[dict])
-async def list_projects(user_id: str = Depends(get_user_id)):
+@router.get("", response_model=dict)
+async def list_projects(
+    user_id: str = Depends(get_user_id),
+    limit: int = 50,
+    offset: int = 0,
+):
     supabase = database.get_supabase()
-    result = supabase.table("projects").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-    return result.data
+    result = supabase.table("projects").select("*", count="exact") \
+        .eq("user_id", user_id) \
+        .order("created_at", desc=True) \
+        .limit(limit) \
+        .offset(offset) \
+        .execute()
+    return {
+        "data": result.data,
+        "total": result.count if hasattr(result, "count") else len(result.data),
+        "limit": limit,
+        "offset": offset,
+    }
 
 @router.get("/{project_id}", response_model=dict)
 async def get_project(project_id: str, user_id: str = Depends(get_user_id)):

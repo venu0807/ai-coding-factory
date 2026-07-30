@@ -57,7 +57,30 @@ Set env vars in Vercel dashboard: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
 ## Usage
 
 1. Open http://localhost:5173
-2. Type project name + description
-3. Requirements Agent generates spec
-4. Coding Agent generates code
-5. Review files in dashboard
+2. Sign up / sign in
+3. Type project name + description
+4. 5-agent pipeline runs: Requirements → Architecture → Coding → Code Review → Deployment
+5. Review files, code review findings, download ZIP
+6. Edit or delete projects from detail page
+
+## Tests
+
+```bash
+cd backend && python -m pytest tests/ -q
+cd frontend && npm test
+```
+
+## Local Dev
+
+```bash
+./run.sh          # starts both backend (:8000) and frontend (:5173)
+LLM_MOCK=true     # use mock responses (no API key needed)
+```
+
+## What's Built
+
+- **Phase 1:** Core pipeline — 5 agents, Supabase DB, auth, realtime
+- **Phase 2a:** UX polish — Toast, Navbar, skeletons, error boundaries
+- **Phase 2b:** Code Review agent — severity-colored findings panel
+- **Phase 2c:** ZIP download, agent prompt quality, mobile responsive
+- **Phase 3 (current):** Auth security (bcrypt), input validation, copy-to-clipboard, loading states, error handling

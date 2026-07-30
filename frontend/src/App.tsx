@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
+import { ThemeProvider } from "./lib/ThemeContext";
 import ToastContainer from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Navbar from "./components/Navbar";
@@ -13,20 +14,22 @@ import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <ToastContainer />
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-          <Route path="/project/:id" element={<ErrorBoundary><Project /></ErrorBoundary>} />
-          <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
-          <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
-          <Route path="/confirm-email" element={<ErrorBoundary><ConfirmEmail /></ErrorBoundary>} />
-          <Route path="/reset-password" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <ToastContainer />
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+            <Route path="/project/:id" element={<ErrorBoundary><Project /></ErrorBoundary>} />
+            <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+            <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
+            <Route path="/confirm-email" element={<ErrorBoundary><ConfirmEmail /></ErrorBoundary>} />
+            <Route path="/reset-password" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

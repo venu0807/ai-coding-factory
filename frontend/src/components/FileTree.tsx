@@ -41,6 +41,27 @@ function highlightCode(code: string, language?: string): string {
   );
 }
 
+function CopyButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 shrink-0"
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
 export default function FileTree({
   projectId,
   selectedPath,
@@ -52,15 +73,19 @@ export default function FileTree({
 }) {
   const [files, setFiles] = useState<GenFile[]>([]);
   const [selected, setSelected] = useState<GenFile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
         const res = await fetch(`${API_BASE}/projects/${projectId}/files`);
         setFiles(await res.json());
       } catch {
         // Network error — component shows empty state
       }
+      setLoading(false);
     };
     load();
   }, [projectId]);
@@ -71,6 +96,18 @@ export default function FileTree({
       if (match) setSelected(match);
     }
   }, [selectedPath, files, selected]);
+
+  if (loading)
+    return (
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Generated Files</h2>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-5 bg-gray-200 rounded animate-pulse w-3/4" />
+          ))}
+        </div>
+      </div>
+    );
 
   if (files.length === 0)
     return (
@@ -83,9 +120,15 @@ export default function FileTree({
   return (
     <div>
       <h2 className="text-lg font-semibold mb-3">Generated Files</h2>
+      <input
+        className="w-full border rounded-lg px-2 py-1.5 mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+        placeholder="Search files..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-full sm:w-64 shrink-0 max-h-48 sm:max-h-96 overflow-y-auto">
-          {files.map((f) => (
+          {files.filter((f) => !search || f.file_path.toLowerCase().includes(search.toLowerCase())).map((f) => (
             <button
               key={f.id}
               className={`block w-full text-left px-3 py-1.5 text-sm rounded truncate ${
@@ -104,6 +147,10 @@ export default function FileTree({
         </div>
         {selected && (
           <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-xs text-gray-500 truncate">{selected.file_path}</span>
+              <CopyButton content={selected.content} />
+            </div>
             <div className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-auto max-h-96">
               <pre className="text-sm">
                 <code

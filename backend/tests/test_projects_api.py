@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 def test_create_project(test_client, mock_deps):
     mock_deps.table.return_value.insert.return_value.execute.return_value.data = [
         {"id": "test-id", "name": "Test Project", "description": "Test desc", "created_at": "2024-01-01T00:00:00Z"}
@@ -11,16 +13,21 @@ def test_create_project(test_client, mock_deps):
 
 
 def test_list_projects(test_client, mock_deps):
-    mock_deps.table.return_value.select.return_value.order.return_value.execute.return_value.data = [
+    result = MagicMock()
+    result.data = [
         {"id": "1", "name": "Project 1", "description": "Desc 1", "created_at": "2024-01-01T00:00:00Z"},
         {"id": "2", "name": "Project 2", "description": "Desc 2", "created_at": "2024-01-01T00:00:00Z"},
     ]
+    result.count = 2
+    mock_deps.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.offset.return_value.execute.return_value = result
 
     response = test_client.get("/projects")
 
     assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 2
+    body = response.json()
+    assert isinstance(body, dict)
+    assert len(body["data"]) == 2
+    assert body["total"] == 2
 
 
 def test_get_project(test_client, mock_deps):

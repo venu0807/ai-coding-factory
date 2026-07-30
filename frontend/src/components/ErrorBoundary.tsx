@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <h2 className="text-xl font-bold text-red-600 mb-2">
               Something went wrong
             </h2>
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               {this.state.error?.message}
             </p>
             <button

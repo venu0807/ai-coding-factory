@@ -21,14 +21,16 @@ export default function AgentTimeline({
 }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [fetchErr, setFetchErr] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
+    setFetchErr(false);
     try {
       const res = await authedFetch(`/projects/${projectId}/tasks`);
       setTasks(await res.json());
     } catch {
-      // Network error — component stays in empty state
+      setFetchErr(true);
     }
   };
 
@@ -75,7 +77,15 @@ export default function AgentTimeline({
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-semibold">Agent Pipeline</h2>
-      {tasks.length === 0 && (
+      {fetchErr && (
+        <div className="border border-red-200 bg-red-50 rounded-lg p-4 text-center">
+          <p className="text-red-600 text-sm mb-2">Failed to load tasks</p>
+          <button onClick={load} className="text-sm text-blue-600 hover:underline">
+            Retry
+          </button>
+        </div>
+      )}
+      {!fetchErr && tasks.length === 0 && (
         <div className="text-gray-400 text-sm flex items-center gap-2">
           <span className="animate-pulse">●</span>
           <span className="animate-pulse" style={{ animationDelay: "0.15s" }}>●</span>

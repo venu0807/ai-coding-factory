@@ -122,6 +122,6 @@ describe("AgentTimeline", () => {
   it("handles fetch error gracefully", async () => {
     vi.mocked(authedFetch).mockRejectedValueOnce(new Error("Network error"));
     render(<AgentTimeline projectId={mockProjectId} />);
-    expect(await screen.findByText(/waiting for agents/i)).toBeDefined();
+    expect(await screen.findByText(/failed to load tasks/i)).toBeDefined();
   });
 });

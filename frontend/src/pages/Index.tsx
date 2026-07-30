@@ -4,21 +4,43 @@ import ProjectCard from "../components/ProjectCard";
 import NewProjectForm from "../components/NewProjectForm";
 import { CardSkeleton } from "../components/Skeleton";
 
+const PAGE_SIZE = 20;
+
 export default function Index() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
 
   const load = async () => {
     setLoading(true);
+    setOffset(0);
     try {
-      const res = await authedFetch("/projects");
-      const data = await res.json();
-      setProjects(Array.isArray(data) ? data : []);
+      const res = await authedFetch("/projects?limit=" + PAGE_SIZE);
+      const body = await res.json();
+      setProjects(Array.isArray(body.data) ? body.data : []);
+      setTotal(body.total || 0);
     } catch {
       setProjects([]);
     }
     setLoading(false);
+  };
+
+  const loadMore = async () => {
+    const nextOffset = offset + PAGE_SIZE;
+    setLoadingMore(true);
+    try {
+      const res = await authedFetch(`/projects?limit=${PAGE_SIZE}&offset=${nextOffset}`);
+      const body = await res.json();
+      const data = Array.isArray(body.data) ? body.data : [];
+      setProjects((prev) => [...prev, ...data]);
+      setOffset(nextOffset);
+    } catch {
+      // ignore
+    }
+    setLoadingMore(false);
   };
 
   useEffect(() => {
@@ -37,7 +59,7 @@ export default function Index() {
   return (
     <div className="max-w-4xl mx-auto p-6 pt-8">
       <h1 className="text-3xl font-bold mb-2">AI Coding Factory</h1>
-      <p className="text-gray-500 mb-8">
+      <p className="text-gray-500 dark:text-gray-400 mb-8">
         Describe your idea, get production code.
       </p>
       <NewProjectForm onCreated={load} />
@@ -73,6 +95,15 @@ export default function Index() {
           {filtered.map((p: any) => (
             <ProjectCard key={p.id} project={p} />
           ))}
+          {!search && filtered.length > 0 && filtered.length < total && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-dashed rounded-lg hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500 disabled:opacity-50"
+            >
+              {loadingMore ? "Loading..." : `Load more (${filtered.length}/${total})`}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -21,19 +21,19 @@ export default function ConfirmEmail() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm text-center">
-        {status === 'confirming' && <p className="text-gray-500">Confirming email...</p>}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-sm border dark:border-gray-700 w-full max-w-sm text-center">
+        {status === 'confirming' && <p className="text-gray-500 dark:text-gray-400">Confirming email...</p>}
         {status === 'success' && (
           <>
-            <h1 className="text-2xl font-bold text-green-600 mb-4">Email confirmed!</h1>
-            <Link to="/login" className="text-green-600">Sign in</Link>
+            <h1 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">Email confirmed!</h1>
+            <Link to="/login" className="text-green-600 dark:text-green-400">Sign in</Link>
           </>
         )}
         {status === 'error' && (
           <>
             <h1 className="text-2xl font-bold text-red-600 mb-4">Confirmation failed</h1>
-            <p className="text-gray-500">Try signing up again.</p>
+            <p className="text-gray-500 dark:text-gray-400">Try signing up again.</p>
           </>
         )}
       </div>

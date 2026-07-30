@@ -13,11 +13,10 @@ describe("CodeReview", () => {
     );
   });
 
-  it("renders nothing when no review completed", async () => {
+  it("shows heading with no issues when no review completed", async () => {
     render(<CodeReview projectId="p1" />);
-    // should not render heading
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.queryByText("Code Review")).toBeNull();
+    expect(await screen.findByText("Code Review")).toBeDefined();
+    expect(await screen.findByText("No issues found.")).toBeDefined();
   });
 
   it("renders findings from completed review task", async () => {

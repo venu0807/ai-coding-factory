@@ -6,10 +6,11 @@ import Index from '../src/pages/Index';
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
+const emptyResponse = { json: async () => ({ data: [], total: 0 }) };
 
 describe('Index page', () => {
   it('renders heading', () => {
-    mockFetch.mockResolvedValueOnce({ json: async () => [] });
+    mockFetch.mockResolvedValueOnce(emptyResponse);
     render(
       <MemoryRouter>
         <Index />
@@ -19,7 +20,7 @@ describe('Index page', () => {
   });
 
   it('renders subtitle', () => {
-    mockFetch.mockResolvedValueOnce({ json: async () => [] });
+    mockFetch.mockResolvedValueOnce(emptyResponse);
     render(
       <MemoryRouter>
         <Index />

@@ -97,14 +97,28 @@ class BaseAgent(ABC):
         ) from last_err
 
     def clean_json(self, raw: str) -> str:
-        """Strip markdown fences and leading/trailing whitespace from LLM output."""
+        """Strip markdown fences, leading/trailing whitespace, and text-wrapping from LLM output."""
         cleaned = raw.strip()
+        # Strip markdown code fences
         if cleaned.startswith("```json"):
             cleaned = cleaned[7:]
         elif cleaned.startswith("```"):
             cleaned = cleaned[3:]
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+        # Handle cases where LLM wraps JSON in "Here is the result: {...}"
+        # Find first { or [ and last } or ]
+        first_brace = -1
+        last_brace = -1
+        for i, ch in enumerate(cleaned):
+            if ch in ("{", "["):
+                if first_brace == -1:
+                    first_brace = i
+            if ch in ("}", "]"):
+                last_brace = i
+        if first_brace != -1 and last_brace > first_brace:
+            cleaned = cleaned[first_brace : last_brace + 1]
         return cleaned.strip()
 
     def parse_json(self, raw: str) -> dict | list:
@@ -119,20 +133,26 @@ class BaseAgent(ABC):
             result = await self.call_llm(system_prompt, user_prompt)
             try:
                 return self.parse_json(result)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                await self.log(f"JSON parse failed (attempt {attempt}): {e}")
                 if attempt == 1:
                     # Ask the LLM to fix JSON formatting
                     fix_prompt = (
                         f"The following response is not valid JSON. "
-                        f"Remove all markdown fences, extra text, and trailing commas.\n\n"
+                        f"Remove all markdown fences, extra text, trailing commas, "
+                        f"and extra commentary. Return ONLY the raw JSON object.\n\n"
                         f"{result}"
                     )
                     result = await self.call_llm(
-                        "You are a JSON repair tool. Return ONLY valid JSON. No markdown.",
+                        "You are a JSON repair tool. Return ONLY valid JSON. "
+                        "No markdown, no explanations, no code fences.",
                         fix_prompt,
                     )
                     try:
                         return self.parse_json(result)
                     except json.JSONDecodeError:
                         pass
+                # Log the raw response for debugging, then re-raise
+                truncated = result[:500] if len(result) > 500 else result
+                await self.log(f"Unparseable response: {truncated}")
                 raise

@@ -29,15 +29,15 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">Reset Password</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-sm border dark:border-gray-700 w-full max-w-sm">
+        <h1 className="text-2xl font-bold mb-6 dark:text-gray-100">Reset Password</h1>
         {sent ? (
           <>
-            <p className="text-green-600 mb-4">
+            <p className="text-green-600 dark:text-green-400 mb-4">
               Check your email for a reset link.
             </p>
-            <Link to="/login" className="text-green-600 text-sm">
+            <Link to="/login" className="text-green-600 dark:text-green-400 text-sm">
               Back to sign in
             </Link>
           </>
@@ -45,7 +45,7 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit}>
             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
             <input
-              className="w-full border rounded-lg px-3 py-2 mb-4"
+              className="w-full border rounded-lg px-3 py-2 mb-4 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               placeholder="Email"
               type="email"
               value={email}
@@ -59,8 +59,8 @@ export default function ResetPassword() {
             >
               {loading ? "Sending..." : "Send reset link"}
             </button>
-            <p className="text-sm text-gray-500 mt-4 text-center">
-              <Link to="/login" className="text-green-600">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
+              <Link to="/login" className="text-green-600 dark:text-green-400">
                 Back to sign in
               </Link>
             </p>

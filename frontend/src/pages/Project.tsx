@@ -103,6 +103,10 @@ export default function Project() {
       toast.error("Name is required");
       return;
     }
+    if (editName.trim().length > 100) {
+      toast.error("Max 100 characters");
+      return;
+    }
     setSaving(true);
     try {
       const res = await authedFetch(`/projects/${id}`, {
@@ -127,7 +131,7 @@ export default function Project() {
     return (
       <div className="max-w-6xl mx-auto p-6 pt-8 text-center">
         <h2 className="text-xl font-bold text-red-600 mb-2">Project not found</h2>
-        <p className="text-gray-500 text-sm mb-4">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
           Could not load this project. It may have been deleted.
         </p>
         <Link to="/" className="text-green-600 text-sm hover:underline">
@@ -139,8 +143,8 @@ export default function Project() {
   if (!project)
     return (
       <div className="max-w-6xl mx-auto p-6 pt-8">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-2 animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded w-1/2 mb-6 animate-pulse" />
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2 animate-pulse" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-6 animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TimelineSkeleton />
           <FileTreeSkeleton />
@@ -150,21 +154,23 @@ export default function Project() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 pt-8">
-      <Link to="/" className="text-green-600 text-sm mb-4 block">
+      <Link to="/" className="text-green-600 dark:text-green-400 text-sm mb-4 block">
         ← Back to projects
       </Link>
 
       {editing ? (
         <div className="mb-6">
           <input
-            className="w-full border rounded-lg px-3 py-2 mb-2 text-xl font-bold"
+            className="w-full border rounded-lg px-3 py-2 mb-2 text-xl font-bold dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
+            maxLength={100}
             placeholder="Project name"
           />
           <textarea
-            className="w-full border rounded-lg px-3 py-2 mb-2"
+            className="w-full border rounded-lg px-3 py-2 mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             rows={2}
+            maxLength={500}
             value={editDesc}
             onChange={(e) => setEditDesc(e.target.value)}
             placeholder="Description (optional)"
@@ -188,11 +194,11 @@ export default function Project() {
       ) : (
         <>
           <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
-            <h1 className="text-3xl font-bold break-all">{project.name}</h1>
+            <h1 className="text-3xl font-bold break-all dark:text-gray-100">{project.name}</h1>
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={startEditing}
-                className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg border"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white px-3 py-1.5 rounded-lg border dark:border-gray-600"
               >
                 Edit
               </button>
@@ -213,7 +219,7 @@ export default function Project() {
             </div>
           </div>
           {project.description && (
-            <p className="text-gray-500 mb-6">{project.description}</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">{project.description}</p>
           )}
         </>
       )}

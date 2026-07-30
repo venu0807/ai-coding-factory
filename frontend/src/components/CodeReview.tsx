@@ -44,8 +44,24 @@ export default function CodeReview({
     load();
   }, [projectId]);
 
-  if (loading) return null;
-  if (!review || !review.findings?.length) return null;
+  if (loading)
+    return (
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-3">Code Review</h2>
+        <div className="flex items-center gap-2 text-gray-400 text-sm">
+          <span className="animate-pulse">●</span>
+          <span>Checking code quality...</span>
+        </div>
+      </div>
+    );
+
+  if (!review || !review.findings?.length)
+    return (
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-3">Code Review</h2>
+        <p className="text-gray-400 text-sm">No issues found.</p>
+      </div>
+    );
 
   const severityBg = (s: string) =>
     s === "error"

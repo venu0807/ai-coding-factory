@@ -1,24 +1,66 @@
-import hashlib
 import json
 import os
+import secrets
+import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, field_validator
 import httpx
+import bcrypt
 from config import settings
+from api.rate_limiter import login_limiter, signup_limiter, reset_limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
 
 class SignupRequest(BaseModel):
     email: str
     password: str
 
+    @field_validator("email")
+    @classmethod
+    def email_valid(cls, v: str) -> str:
+        if len(v) > 255:
+            raise ValueError("Email too long")
+        if "@" not in v:
+            raise ValueError("Invalid email")
+        return v.strip().lower()
+
+    @field_validator("password")
+    @classmethod
+    def password_valid(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Min 6 characters")
+        if len(v) > 128:
+            raise ValueError("Max 128 characters")
+        return v
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+    @field_validator("email")
+    @classmethod
+    def email_valid(cls, v: str) -> str:
+        return v.strip().lower()
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def email_valid(cls, v: str) -> str:
+        return v.strip().lower()
+
+
 SUPABASE_AUTH_URL = f"{settings.supabase_url}/auth/v1"
 LOCAL_USERS_FILE = os.path.join(os.path.dirname(__file__), "..", "local_users.json")
+TOKEN_EXPIRY_SECONDS = 86400  # 24h
+
+# In-memory token store: token -> {user_id, email, created_at}
+_tokens: dict[str, dict] = {}
 
 
 def _load_users() -> dict:
@@ -37,15 +79,39 @@ def _save_users(users: dict):
 
 
 def _hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-def _make_fake_token(email: str) -> str:
-    return f"local_{hashlib.md5((email + datetime.now(timezone.utc).isoformat()).encode()).hexdigest()}"
+def _verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+
+def _make_token(email: str, user_id: str) -> str:
+    token = f"local_{secrets.token_hex(32)}"
+    _tokens[token] = {
+        "user_id": user_id,
+        "email": email,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return token
+
+
+def validate_local_token(token: str) -> str | None:
+    """Returns user_id if token is valid, None otherwise."""
+    data = _tokens.get(token)
+    if not data:
+        return None
+    created = data.get("created_at")
+    if created:
+        age = (datetime.now(timezone.utc) - datetime.fromisoformat(created)).total_seconds()
+        if age > TOKEN_EXPIRY_SECONDS:
+            del _tokens[token]
+            return None
+    return data["user_id"]
 
 
 @router.post("/signup")
-async def signup(body: SignupRequest):
+async def signup(body: SignupRequest, _=Depends(signup_limiter.dependency)):
     # Try Supabase first
     if settings.supabase_url and settings.supabase_key:
         try:
@@ -65,20 +131,22 @@ async def signup(body: SignupRequest):
 
     # Fallback to local auth
     users = _load_users()
-    if body.email in users:
+    email = body.email
+    if email in users:
         raise HTTPException(400, "User already exists")
-    users[body.email] = {
+    user_id = str(uuid.uuid4())
+    users[email] = {
         "password": _hash_password(body.password),
-        "id": hashlib.md5(body.email.encode()).hexdigest(),
+        "id": user_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     _save_users(users)
-    token = _make_fake_token(body.email)
-    return {"access_token": token, "token_type": "bearer", "user": {"id": users[body.email]["id"], "email": body.email}}
+    token = _make_token(email, user_id)
+    return {"access_token": token, "token_type": "bearer", "user": {"id": user_id, "email": email}}
 
 
 @router.post("/login")
-async def login(body: LoginRequest):
+async def login(body: LoginRequest, _=Depends(login_limiter.dependency)):
     # Try Supabase first
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -97,15 +165,16 @@ async def login(body: LoginRequest):
 
     # Fallback to local auth
     users = _load_users()
-    user = users.get(body.email)
-    if not user or user["password"] != _hash_password(body.password):
+    email = body.email
+    user = users.get(email)
+    if not user or not _verify_password(body.password, user["password"]):
         raise HTTPException(401, "Invalid credentials")
-    token = _make_fake_token(body.email)
-    return {"access_token": token, "token_type": "bearer", "user": {"id": user["id"], "email": body.email}}
+    token = _make_token(email, user["id"])
+    return {"access_token": token, "token_type": "bearer", "user": {"id": user["id"], "email": email}}
 
 
 @router.post("/reset-password")
-async def reset_password(body: SignupRequest):
+async def reset_password(body: ResetPasswordRequest, _=Depends(reset_limiter.dependency)):
     supabase_url = settings.supabase_url
     if not supabase_url:
         return {"message": "Password reset not available in local mode"}

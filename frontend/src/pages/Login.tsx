@@ -39,16 +39,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="bg-white p-8 rounded-xl shadow-sm border w-full max-w-sm"
+        className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-sm border dark:border-gray-700 w-full max-w-sm"
       >
-        <h1 className="text-2xl font-bold mb-6">Sign In</h1>
+        <h1 className="text-2xl font-bold mb-6 dark:text-gray-100">Sign In</h1>
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
         <input
-          className="w-full border rounded-lg px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full border rounded-lg px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
           placeholder="Email"
           type="email"
           value={email}
@@ -59,7 +59,7 @@ export default function Login() {
           <p className="text-red-500 text-xs mb-3">{fieldErrors.email}</p>
         )}
         <input
-          className="w-full border rounded-lg px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full border rounded-lg px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
           placeholder="Password"
           type="password"
           value={password}
@@ -70,7 +70,7 @@ export default function Login() {
           <p className="text-red-500 text-xs mb-3">{fieldErrors.password}</p>
         )}
         <div className="text-right -mt-2 mb-2">
-          <Link to="/reset-password" className="text-xs text-green-600 hover:underline">
+          <Link to="/reset-password" className="text-xs text-green-600 dark:text-green-400 hover:underline">
             Forgot password?
           </Link>
         </div>
@@ -81,9 +81,9 @@ export default function Login() {
         >
           {loading ? "Signing in..." : "Sign In"}
         </button>
-        <p className="text-sm text-gray-500 mt-4 text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
           No account?{" "}
-          <Link to="/signup" className="text-green-600">
+          <Link to="/login" className="text-green-600 dark:text-green-400">
             Sign up
           </Link>
         </p>
