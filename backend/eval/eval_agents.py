@@ -36,6 +36,8 @@ SAMPLE_INPUTS = {
 }
 
 # Scoring rubric used by the evaluator LLM
+EVAL_MODEL = "deepseek-v4-flash-free"
+
 EVAL_PROMPT = """You are a senior engineering manager evaluating AI agent outputs. Score each dimension 1-5.
 
 Return ONLY valid JSON:
@@ -110,7 +112,7 @@ async def eval_output(agent_name: str, system_prompt: str, output: str) -> dict:
         "output": output[:3000],
     }, indent=2)
 
-    result = await eval_agent.call_llm(EVAL_PROMPT, user_msg)
+    result = await eval_agent.call_llm(EVAL_PROMPT, user_msg, model=EVAL_MODEL)
     try:
         parsed = json.loads(result) if isinstance(result, str) else result
         if isinstance(parsed, dict):
@@ -214,7 +216,8 @@ async def main():
     print(f"\n🔬 Evaluating agents: {', '.join(agents_to_run)}")
     print(f"   LLM_MOCK={os.environ.get('LLM_MOCK', 'false')}")
     if not os.environ.get("LLM_MOCK"):
-        print(f"   Model: {os.environ.get('OMNIROUTER_MODEL', 'deepseek-v4-flash-free')}")
+        from agents.base import OMNIROUTER_MODEL
+        print(f"   Model: {OMNIROUTER_MODEL}")
         key = settings.omnirouter_api_key
         print(f"   API key: {key[:8]}...{key[-4:] if len(key) > 12 else '(demo)'}")
 

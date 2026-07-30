@@ -14,24 +14,26 @@ Review for these dimensions (in order of priority):
 5. **Testing** — Are there tests? Do they cover edge cases? No tests that always pass?
 6. **Performance** — N+1 queries, unoptimized loops, missing caching, large payloads
 
-Return ONLY valid JSON:
+CRITICAL: Return ONLY valid JSON. No markdown, no code fences, no extra text. Just the raw JSON object.
+
 {
-  "summary": "one paragraph overview of code quality",
-  "overall_score": "pass" | "pass_with_issues" | "fail",
+  "summary": "One paragraph overview of code quality",
+  "overall_score": "pass_with_issues",
   "findings": [
     {
-      "file": "path/to/file",
-      "line": null,
-      "severity": "error" | "warning" | "info",
-      "dimension": "correctness" | "security" | "error_handling" | "code_quality" | "testing" | "performance",
-      "message": "clear description of the issue",
-      "suggestion": "specific, actionable fix"
+      "file": "path/to/file.ts",
+      "line": 42,
+      "severity": "error",
+      "dimension": "security",
+      "message": "SQL injection risk in query builder",
+      "suggestion": "Use parameterized queries instead of string interpolation"
     }
   ]
 }
 
+If no significant issues found: {"summary": "Code looks good", "findings": [], "overall_score": "pass"}
 Be thorough but fair. Not every minor style issue needs a finding. Focus on what matters.
-If no significant issues found, return {"summary": "Code looks good", "findings": [], "overall_score": "pass"}"""
+Do NOT wrap in markdown. No extra text."""
 
 
 class CodeReviewAgent(BaseAgent):

@@ -51,7 +51,7 @@ class BaseAgent(ABC):
             pass
 
     async def call_llm(
-        self, system_prompt: str, user_prompt: str
+        self, system_prompt: str, user_prompt: str, model: str | None = None
     ) -> str:
         if settings.llm_mock:
             agent_type = self.__class__.__name__.replace("Agent", "").lower()
@@ -59,6 +59,7 @@ class BaseAgent(ABC):
             await self.log(f"[MOCK] {agent_type}: returning mock response")
             return mock
         last_err = None
+        active_model = model or OMNIROUTER_MODEL
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 async with httpx.AsyncClient(timeout=120.0) as client:
@@ -69,7 +70,7 @@ class BaseAgent(ABC):
                             "Content-Type": "application/json",
                         },
                         json={
-                            "model": OMNIROUTER_MODEL,
+                            "model": active_model,
                             "messages": [
                                 {"role": "system", "content": system_prompt},
                                 {"role": "user", "content": user_prompt},
@@ -126,11 +127,11 @@ class BaseAgent(ABC):
         return json.loads(self.clean_json(raw))
 
     async def call_llm_json(
-        self, system_prompt: str, user_prompt: str
+        self, system_prompt: str, user_prompt: str, model: str | None = None
     ) -> dict | list:
         """Call LLM and parse JSON result. Retries once on parse failure with format repair."""
         for attempt in range(1, 3):
-            result = await self.call_llm(system_prompt, user_prompt)
+            result = await self.call_llm(system_prompt, user_prompt, model=model)
             try:
                 return self.parse_json(result)
             except json.JSONDecodeError as e:

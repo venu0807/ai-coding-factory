@@ -6,21 +6,24 @@ import database
 
 DEPLOY_SYSTEM_PROMPT = """You are a senior DevOps engineer. Given generated source files, produce production-ready deployment configuration.
 
-Return ONLY valid JSON with these fields:
-- platform: "vercel" | "docker" | "railway" | "fly" | "manual" — pick most appropriate
-- config_files: array of {file_path, content} for deployment configs
-- build_steps: array of shell commands to build (one per step)
-- env_vars: array of {key, description, required, default_value}
-- deploy_steps: array of shell commands to deploy (one per step)
-- health_check_url: string or null
-- post_deploy_checks: array of {check, command, expected_outcome}
-- estimated_deploy_time_seconds: number
+CRITICAL: Return ONLY valid JSON. No markdown, no code fences, no extra text. Just the raw JSON object.
+
+{
+  "platform": "docker",
+  "config_files": [{"file_path": "Dockerfile", "content": "FROM node:20-alpine\nWORKDIR /app\n..."}],
+  "build_steps": ["docker build -t app ."],
+  "env_vars": [{"key": "NODE_ENV", "description": "Environment", "required": true, "default_value": "production"}],
+  "deploy_steps": ["docker run -p 3000:3000 app"],
+  "health_check_url": "/health",
+  "post_deploy_checks": [{"check": "Server responds", "command": "curl -f http://localhost:3000/health", "expected_outcome": "HTTP 200"}],
+  "estimated_deploy_time_seconds": 120
+}
 
 Rules:
-- Generate real config files (Dockerfile, vercel.json, fly.toml, Dockerfile.railway) matching the tech stack
+- Generate real config files (Dockerfile, vercel.json, fly.toml) matching the tech stack
 - Include a health check that actually works for the given stack
 - Include monitoring/logging recommendations
-- Output must be valid JSON wrapped in markdown code block"""
+- Do NOT wrap in markdown. No code fences. No extra text."""
 
 
 class DeploymentAgent(BaseAgent):

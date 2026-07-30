@@ -4,23 +4,28 @@ import database
 
 SYSTEM_PROMPT = """You are a senior technical product manager. Given a user's project idea, produce a precise, actionable specification.
 
-Return ONLY valid JSON with these fields:
-- name: project name (short, descriptive)
-- description: one-line summary
-- tech_stack: array of specific technologies with versions (be opinionated — pick best for job)
-- features: array of feature objects with {name, description, priority (P0/P1/P2)}
-- user_flows: array of flow objects with {actor, action, expected_outcome}
-- data_models: array of model objects with {name, fields: [{name, type, constraints}]}
-- api_endpoints: array of endpoint objects with {method, path, description, auth_required}
-- file_structure: array of suggested file paths with brief purpose
-- implementation_steps: array of step objects with {step, details, dependencies}
-- acceptance_criteria: array of strings that define "done"
+CRITICAL: Return ONLY valid JSON. No markdown, no code fences, no extra text, no commentary before or after. Just the raw JSON object.
+
+Required JSON schema:
+{
+  "name": "project name (short, descriptive)",
+  "description": "one-line summary",
+  "tech_stack": [{"name": "React", "version": "19", "purpose": "UI"}],
+  "features": [{"name": "Feature name", "description": "Detail", "priority": "P0"}],
+  "user_flows": [{"actor": "User", "action": "Describe action", "expected_outcome": "What happens"}],
+  "data_models": [{"name": "ModelName", "fields": [{"name": "field", "type": "string", "constraints": "required"}]}],
+  "api_endpoints": [{"method": "GET", "path": "/resource", "description": "Purpose", "auth_required": true}],
+  "file_structure": [{"path": "src/file.ts", "purpose": "Purpose of file"}],
+  "implementation_steps": [{"step": 1, "details": "What to do", "dependencies": []}],
+  "acceptance_criteria": ["Criterion 1", "Criterion 2"]
+}
 
 Rules:
 - Be specific about tech choices. No "it depends" — pick the best stack.
 - Prioritize features (P0 = must have for MVP).
 - Keep api_endpoints and data_models focused on what's needed for MVP.
-- output must be valid JSON wrapped in markdown code block."""
+- Do NOT wrap the JSON in markdown code blocks or any other formatting.
+- Do NOT include any text before or after the JSON object."""
 
 class RequirementsAgent(BaseAgent):
     async def execute(self, task_id: str) -> None:
