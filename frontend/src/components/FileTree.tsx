@@ -55,9 +55,37 @@ function CopyButton({ content }: { content: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 shrink-0"
+      className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 shrink-0 focus-visible:outline-2 focus-visible:outline-green-400"
+      aria-label={copied ? "Copied to clipboard" : "Copy file content"}
     >
       {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
+function DownloadButton({ projectId, fileId, filename }: { projectId: string; fileId: string; filename: string }) {
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/files/${fileId}`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silent
+    }
+  };
+  return (
+    <button
+      onClick={handleDownload}
+      className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 shrink-0 focus-visible:outline-2 focus-visible:outline-green-400"
+      aria-label={`Download ${filename}`}
+    >
+      ⬇
     </button>
   );
 }
@@ -131,15 +159,16 @@ export default function FileTree({
           {files.filter((f) => !search || f.file_path.toLowerCase().includes(search.toLowerCase())).map((f) => (
             <button
               key={f.id}
-              className={`block w-full text-left px-3 py-1.5 text-sm rounded truncate ${
+              className={`block w-full text-left px-3 py-1.5 text-sm rounded truncate focus-visible:outline-2 focus-visible:outline-green-500 ${
                 selected?.id === f.id
-                  ? "bg-green-100 text-green-700"
-                  : "hover:bg-gray-100"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
               onClick={() => {
                 setSelected(f);
                 onSelect?.(f.file_path);
               }}
+              aria-label={`Select file ${f.file_path}`}
             >
               {f.file_path}
             </button>
@@ -149,7 +178,10 @@ export default function FileTree({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
               <span className="text-xs text-gray-500 truncate">{selected.file_path}</span>
-              <CopyButton content={selected.content} />
+              <div className="flex gap-1">
+                <DownloadButton projectId={projectId} fileId={selected.id} filename={selected.file_path.split("/").pop() || "file"} />
+                <CopyButton content={selected.content} />
+              </div>
             </div>
             <div className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-auto max-h-96">
               <pre className="text-sm">

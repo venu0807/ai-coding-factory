@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react";
 import { authedFetch } from "../lib/supabase";
-
-interface Finding {
-  file: string;
-  line: number | null;
-  severity: "error" | "warning" | "info";
-  message: string;
-  suggestion: string;
-}
-
-interface Review {
-  summary?: string;
-  findings: Finding[];
-}
+import type { Review, ReviewFinding, AgentTask } from "../lib/types";
 
 export default function CodeReview({
   projectId,
@@ -28,9 +16,9 @@ export default function CodeReview({
     const load = async () => {
       try {
         const res = await authedFetch(`/projects/${projectId}/tasks`);
-        const tasks = await res.json();
+        const tasks: AgentTask[] = await res.json();
         const reviewTask = tasks.find(
-          (t: any) =>
+          (t) =>
             t.agent_type === "code_review" && t.status === "completed",
         );
         if (reviewTask?.output_data?.review) {

@@ -6,11 +6,12 @@ import AgentTimeline from "../components/AgentTimeline";
 import FileTree from "../components/FileTree";
 import CodeReview from "../components/CodeReview";
 import { TimelineSkeleton, FileTreeSkeleton } from "../components/Skeleton";
+import type { Project } from "../lib/types";
 
 export default function Project() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [project, setProject] = useState<any>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -42,7 +43,7 @@ export default function Project() {
             table: "projects",
             filter: `id=eq.${id}`,
           },
-          (p: any) => setProject(p.new),
+          (p: { new: Project }) => setProject(p.new),
         )
         .subscribe();
       unsub = () => sub.unsubscribe();
@@ -198,21 +199,24 @@ export default function Project() {
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={startEditing}
-                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white px-3 py-1.5 rounded-lg border dark:border-gray-600"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white px-3 py-1.5 rounded-lg border dark:border-gray-600 focus-visible:outline-2 focus-visible:outline-green-500"
+                aria-label="Edit project"
               >
                 Edit
               </button>
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-green-500"
+                aria-label="Download project as ZIP"
               >
                 {downloading ? "Downloading..." : "Download ZIP"}
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
+                className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-red-500"
+                aria-label="Delete project"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>

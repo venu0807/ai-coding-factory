@@ -1,25 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { getSupabase, authedFetch } from "../lib/supabase";
 import { toast } from "../lib/toast";
-
-interface Task {
-  id: string;
-  agent_type: string;
-  status: string;
-  input_data?: any;
-  output_data?: any;
-  error?: string;
-  logs?: Array<{ timestamp: string; message: string }>;
-  created_at: string;
-  completed_at?: string;
-}
+import type { AgentTask } from "../lib/types";
 
 export default function AgentTimeline({
   projectId,
 }: {
   projectId: string;
 }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [fetchErr, setFetchErr] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -40,7 +29,16 @@ export default function AgentTimeline({
     getSupabase().then((s) => {
       const sub = s
         .channel("agent_tasks")
-        .on("postgres_changes", { event: "*", schema: "public", table: "agent_tasks" }, load)
+        .on("postgres_changes", { event: "*", schema: "public", table: "agent_tasks" }, (payload: any) => {
+          // Incremental update — merge changed task into state without full reload
+          if (payload.eventType === "INSERT") {
+            setTasks((prev) => [...prev, payload.new]);
+          } else if (payload.eventType === "UPDATE") {
+            setTasks((prev) => prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t)));
+          } else if (payload.eventType === "DELETE") {
+            setTasks((prev) => prev.filter((t) => t.id !== payload.old.id));
+          }
+        })
         .subscribe();
       unsub = () => sub.unsubscribe();
     });
@@ -78,8 +76,8 @@ export default function AgentTimeline({
     <div className="space-y-3">
       <h2 className="text-lg font-semibold">Agent Pipeline</h2>
       {fetchErr && (
-        <div className="border border-red-200 bg-red-50 rounded-lg p-4 text-center">
-          <p className="text-red-600 text-sm mb-2">Failed to load tasks</p>
+        <div className="border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 rounded-lg p-4 text-center">
+          <p className="text-red-600 dark:text-red-400 text-sm mb-2">Failed to load tasks</p>
           <button onClick={load} className="text-sm text-blue-600 hover:underline">
             Retry
           </button>
@@ -94,9 +92,9 @@ export default function AgentTimeline({
         </div>
       )}
       {tasks.map((t) => (
-        <div key={t.id} className="border rounded-lg p-4 bg-white">
+        <div key={t.id} className="border dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-medium capitalize">
+            <span className="font-medium capitalize dark:text-gray-100">
               {t.agent_type} agent
             </span>
             <div className="flex items-center gap-2">
@@ -133,9 +131,9 @@ export default function AgentTimeline({
             </p>
           )}
           {t.logs && t.logs.length > 0 && (
-            <div className="mt-2 bg-gray-50 rounded p-2 max-h-32 overflow-y-auto text-xs font-mono space-y-0.5">
+            <div className="mt-2 bg-gray-50 dark:bg-gray-800 rounded p-2 max-h-32 overflow-y-auto text-xs font-mono space-y-0.5">
               {t.logs.map((l, i) => (
-                <div key={i} className="text-gray-600">
+                <div key={i} className="text-gray-600 dark:text-gray-400">
                   {l.message}
                 </div>
               ))}

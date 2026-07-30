@@ -15,8 +15,8 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={toggle}
-            className="text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 shrink-0"
-            aria-label="Toggle dark mode"
+            className="text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 shrink-0 focus-visible:outline-2 focus-visible:outline-green-500"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </button>

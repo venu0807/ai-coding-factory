@@ -52,6 +52,22 @@ async def retry_task(project_id: str, task_id: str):
     return {"ok": True}
 
 
+@router.get("/files/{file_id}")
+async def download_single_file(project_id: str, file_id: str):
+    supabase = database.get_supabase()
+    result = supabase.table("generated_files").select("*").eq("id", file_id).execute()
+    if not result.data:
+        raise HTTPException(404, "File not found")
+    f = result.data[0]
+    content = f["content"]
+    filename = f["file_path"].split("/")[-1]
+    return StreamingResponse(
+        iter([content]),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @router.get("/download")
 async def download_project(project_id: str):
     supabase = database.get_supabase()
