@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in { animation: slide-in 0.25s ease-out; }
+
+body {
+  background-color: #f9fafb;
+  color: #111827;
+}
+.dark body,
+body.dark,
+:root.dark body {
+  background-color: #030712;
+  color: #f3f4f6;
+}
+
+.hl-keyword { color: #7c3aed; font-weight: 600; }
+.hl-string { color: #059669; }
+.hl-comment { color: #9ca3af; font-style: italic; }
+.hl-number { color: #d97706; }
+
+.dark .hl-keyword { color: #a78bfa; }
+.dark .hl-string { color: #34d399; }
+.dark .hl-comment { color: #6b7280; }
+.dark .hl-number { color: #fbbf24; }
