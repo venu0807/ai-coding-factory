@@ -208,6 +208,7 @@ async def main():
 
     if args.mock:
         os.environ["LLM_MOCK"] = "true"
+        settings.llm_mock = True  # settings was loaded at import; env alone won't flip it
 
     agents_to_run = ["requirements", "architecture", "coding"]
     if args.single:

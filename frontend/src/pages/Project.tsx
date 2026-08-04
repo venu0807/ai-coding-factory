@@ -90,6 +90,7 @@ export default function Project() {
   };
 
   const startEditing = () => {
+    if (!project) return;
     setEditName(project.name);
     setEditDesc(project.description || "");
     setEditing(true);

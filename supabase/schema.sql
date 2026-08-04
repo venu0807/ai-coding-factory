@@ -40,3 +40,38 @@ CREATE INDEX idx_generated_files_task ON generated_files(task_id);
 
 ALTER PUBLICATION supabase_realtime ADD TABLE agent_tasks;
 ALTER PUBLICATION supabase_realtime ADD TABLE projects;
+
+-- =============================================================================
+-- Row Level Security (CRITICAL): agent_tasks is on the realtime publication and
+-- the frontend subscribes with the anon key. Without RLS any anonymous browser
+-- could stream every user's tasks (including generated code). Each user can only
+-- see rows that trace back to a project they own.
+-- =============================================================================
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE generated_files ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "own projects" ON projects;
+CREATE POLICY "own projects" ON projects
+  FOR ALL TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "own tasks" ON agent_tasks;
+CREATE POLICY "own tasks" ON agent_tasks
+  FOR ALL TO authenticated
+  USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()))
+  WITH CHECK (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "own files" ON generated_files;
+CREATE POLICY "own files" ON generated_files
+  FOR ALL TO authenticated
+  USING (task_id IN (
+    SELECT id FROM agent_tasks
+    WHERE project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
+  ))
+  WITH CHECK (task_id IN (
+    SELECT id FROM agent_tasks
+    WHERE project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
+  ));
+

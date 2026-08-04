@@ -18,6 +18,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Restore local-auth session first (persisted by lib/auth.ts)
+    const raw = localStorage.getItem("local_user");
+    if (raw) {
+      try { setUser(JSON.parse(raw)); } catch { /* ignore corrupt */ }
+    }
     getSupabase().then((s) => {
       s.auth
         .getSession()
@@ -35,11 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return () => subscription.unsubscribe();
     });
+
+    const onLocalAuth = () => {
+      const u = localStorage.getItem("local_user");
+      if (u) {
+        try { setUser(JSON.parse(u)); } catch { /* ignore */ }
+      }
+      setLoading(false);
+    };
+    window.addEventListener("local-auth", onLocalAuth);
+    return () => window.removeEventListener("local-auth", onLocalAuth);
   }, []);
 
   const signOut = async () => {
     const s = await getSupabase();
     await s.auth.signOut();
+    localStorage.removeItem("local_token");
+    localStorage.removeItem("local_user");
     setUser(null);
   };
 

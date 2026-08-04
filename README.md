@@ -83,4 +83,5 @@ LLM_MOCK=true     # use mock responses (no API key needed)
 - **Phase 2a:** UX polish — Toast, Navbar, skeletons, error boundaries
 - **Phase 2b:** Code Review agent — severity-colored findings panel
 - **Phase 2c:** ZIP download, agent prompt quality, mobile responsive
-- **Phase 3 (current):** Auth security (bcrypt), input validation, copy-to-clipboard, loading states, error handling
+- **Phase 3:** Auth security (bcrypt), input validation, copy-to-clipboard, loading states, error handling
+- **Phase 4:** Dark mode, pagination, rate limiting, session expiry, password strength, file search, agent eval harness, sort/filter, single file download, realtime streaming, TypeScript types, accessibility

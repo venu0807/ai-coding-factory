@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [dev]
+    branches: [dev, worktree-ai-coding-factory]
 
 jobs:
   backend:
@@ -39,3 +39,4 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npx vitest run
+      - run: npm run build

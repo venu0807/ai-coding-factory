@@ -14,7 +14,8 @@ export interface AgentTask {
   agent_type: string;
   status: "pending" | "running" | "completed" | "failed";
   input_data?: Record<string, unknown>;
-  output_data?: Record<string, unknown>;
+  // output_data is dynamic JSON emitted by the LLM agents (review, file_count, logs, etc.)
+  output_data?: any;
   error?: string;
   logs?: Array<{ timestamp: string; message: string }>;
   created_at: string;

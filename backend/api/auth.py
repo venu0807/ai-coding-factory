@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, field_validator
 import httpx
 import bcrypt
+import hashlib
 from config import settings
 from api.rate_limiter import login_limiter, signup_limiter, reset_limiter
 
@@ -83,7 +84,15 @@ def _hash_password(password: str) -> str:
 
 
 def _verify_password(password: str, hashed: str) -> bool:
+    # Legacy accounts (created before bcrypt) were stored as bare SHA-256 hex.
+    # Accept those so existing users aren't locked out, and flag for migration.
+    if len(hashed) == 64 and all(c in "0123456789abcdef" for c in hashed.lower()):
+        return hashlib.sha256(password.encode()).hexdigest() == hashed.lower()
     return bcrypt.checkpw(password.encode(), hashed.encode())
+
+
+def _is_legacy_sha256(hashed: str) -> bool:
+    return len(hashed) == 64 and all(c in "0123456789abcdef" for c in hashed.lower())
 
 
 def _make_token(email: str, user_id: str) -> str:
@@ -169,6 +178,11 @@ async def login(body: LoginRequest, _=Depends(login_limiter.dependency)):
     user = users.get(email)
     if not user or not _verify_password(body.password, user["password"]):
         raise HTTPException(401, "Invalid credentials")
+    # Migrate legacy SHA-256 hash to bcrypt on first successful login
+    if _is_legacy_sha256(user["password"]):
+        user["password"] = _hash_password(body.password)
+        users[email] = user
+        _save_users(users)
     token = _make_token(email, user["id"])
     return {"access_token": token, "token_type": "bearer", "user": {"id": user["id"], "email": email}}
 

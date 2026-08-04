@@ -38,7 +38,10 @@ export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000"
 
 export async function authedFetch(path: string, init?: RequestInit) {
   const s = await getSupabase();
-  const token = s.auth ? (await s.auth.getSession()).data.session?.access_token : undefined;
+  const supabaseToken = s.auth ? (await s.auth.getSession()).data.session?.access_token : undefined;
+  // Local-auth fallback token (persisted by lib/auth.ts)
+  const localToken = typeof localStorage !== "undefined" ? localStorage.getItem("local_token") || undefined : undefined;
+  const token = supabaseToken || localToken;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
