@@ -66,7 +66,7 @@ function CopyButton({ content }: { content: string }) {
 function DownloadButton({ projectId, fileId, filename }: { projectId: string; fileId: string; filename: string }) {
   const handleDownload = async () => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/files/${fileId}`);
+      const res = await fetch(`${API_BASE}/projects/${projectId}/files/${fileId}`);
       if (!res.ok) return;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
