@@ -1,0 +1,9 @@
+__pycache__/
+.env
+node_modules/
+dist/
+.vite/
+*.pyc
+.venv/
+.impeccable/
+backend/local_users.json

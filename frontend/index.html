@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Coding Factory</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div id="root"></div>
+    <div id="error-box" style="display:none;padding:20px;background:#fee;color:#c00;white-space:pre-wrap;font-family:monospace"></div>
+    <script>
+    window.onerror = function(m,s,l,c,e) {
+      document.getElementById('error-box').style.display='block';
+      document.getElementById('error-box').textContent = m + '\n' + s + ':' + l;
+    };
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
